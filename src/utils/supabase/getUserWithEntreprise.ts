@@ -16,16 +16,16 @@ export async function getUserWithEntreprise() {
 
   const { data: userData, error: fetchError } = await supabase
     .from('users')
-    .select('*, entreprise:entreprises(*)') // ✅ join avec alias
+    .select('*, entreprise(*)') // nom de la relation automatique par Supabase
     .eq('id', user.id)
     .single()
 
-  if (fetchError || !userData || !('entreprise' in userData)) {
+  if (fetchError || !userData || !userData.entreprise) {
     throw new Error('Utilisateur ou entreprise introuvable')
   }
 
   return {
     user: userData,
-    entreprise: (userData as any).entreprise, // ⛑️ Type forcé car Supabase n'infère pas automatiquement les alias
+    entreprise: userData.entreprise, // note bien le "s"
   }
 }
