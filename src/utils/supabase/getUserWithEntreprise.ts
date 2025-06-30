@@ -6,26 +6,33 @@ export async function getUserWithEntreprise() {
   const supabase = createServerComponentClient<Database>({ cookies })
 
   const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession()
 
-  if (authError || !user) {
+  const user = session?.user
+
+  if (sessionError || !user) {
     throw new Error('Utilisateur non connecté')
   }
 
-  const { data: userData, error: fetchError } = await supabase
+  console.log('🟡 USER connecté :', user)
+
+  const { data: usersRow, error: userError } = await supabase
     .from('users')
-    .select('*, entreprise(*)') // nom de la relation automatique par Supabase
-    .eq('id', user.id)
+    .select('*, entreprises (*)') // 🟢 essaie avec entreprises directement
+    .eq('id', user.id) // 🧠 'id' correspond au champ dans la table 'users'
     .single()
 
-  if (fetchError || !userData || !userData.entreprise) {
+  console.log('🟡 Résultat user + entreprise :', usersRow)
+
+  if (userError || !usersRow || !usersRow.entreprises) {
+    console.log('🔴 ERREUR récupération user + entreprise', { usersRow, userError })
     throw new Error('Utilisateur ou entreprise introuvable')
   }
 
   return {
-    user: userData,
-    entreprise: userData.entreprise, // note bien le "s"
+    user: usersRow,
+    entreprise: usersRow.entreprises,
   }
 }
